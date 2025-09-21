@@ -333,11 +333,12 @@ int main()
         {
             if (event.type == SDL_QUIT)
                 running = 0;
-            // if (event.type == SDL_MOUSEBUTTONDOWN)
-            // {
-            //     int x = event.button.x / SQUARE_SIZE;
-            //     int y = event.button.y / SQUARE_SIZE;
-            // }
+            if (event.type == SDL_MOUSEBUTTONDOWN)
+            {
+                int x = event.button.x / SQUARE_SIZE;
+                int y = event.button.y / SQUARE_SIZE;
+                printf("x: %d y: %d", x, y);
+            }
         }
         render_board(renderer, board, pieces, SQUARE_SIZE);
     }
