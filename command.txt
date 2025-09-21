@@ -1,0 +1,1 @@
+- Run file with linked packages: gcc -o chess main.o board.o pieces.o -lSDL2
