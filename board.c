@@ -337,9 +337,10 @@ int main()
             {
                 int x = event.button.x / SQUARE_SIZE;
                 int y = event.button.y / SQUARE_SIZE;
-                printf("x: %d y: %d", x, y);
             }
         }
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
         render_board(renderer, board, pieces, SQUARE_SIZE);
     }
 
