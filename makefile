@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -I/usr/include/SDL2
 LDFLAGS = -lSDL2 -lSDL2_image
 
-SRC = board.c
+SRC = pieces.c board.c
 OBJ = $(SRC:.c=.o)
 EXEC = chess
 
