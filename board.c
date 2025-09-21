@@ -162,28 +162,26 @@ void make_move(Square input, Square output, PieceBB pieces[])
 
 void render_board(SDL_Renderer *renderer, char board[8][8], PieceBB pieces[], int square_size)
 {
-    // Draw squares
-    for (int y = 0; y < 8; y++)
+    for (int row = 0; row < 8; row++)
     {
-        for (int x = 0; x < 8; x++)
+        for (int file = 0; file < 8; file++)
         {
+            int y = 7 - row; // invert row for SDL coordinate
+            int x = file;
+
             SDL_Rect rect = {x * square_size, y * square_size, square_size, square_size};
-            if ((x + y) % 2 == 0)
-            {
-                SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255); // light
-            }
+            if ((x + row) % 2 == 0) // you can also do (x+y)%2
+                SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255);
             else
-            {
-                SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255); // dark
-            }
+                SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255);
             SDL_RenderFillRect(renderer, &rect);
 
-            if (board[y][x] != 0)
+            if (board[row][file] != 0)
             {
                 SDL_Texture *tex = NULL;
                 for (int i = 0; i < 12; i++)
                 {
-                    if (pieces[i].symbol == board[y][x])
+                    if (pieces[i].symbol == board[row][file])
                     {
                         tex = pieces[i].texture;
                         break;
@@ -202,7 +200,8 @@ void render_board(SDL_Renderer *renderer, char board[8][8], PieceBB pieces[], in
             }
         }
     }
-    SDL_RenderPresent(renderer); // update window
+
+    SDL_RenderPresent(renderer);
 }
 
 void bitboards_to_board(PieceBB pieces[], char board[8][8])
@@ -335,8 +334,9 @@ int main()
                 running = 0;
             if (event.type == SDL_MOUSEBUTTONDOWN)
             {
-                int x = event.button.x / SQUARE_SIZE;
-                int y = event.button.y / SQUARE_SIZE;
+                int file = event.button.x / SQUARE_SIZE;
+                int row = 7 - (event.button.y / SQUARE_SIZE);  // flip
+                printf("file: %d, row: %d\n", file, row);
             }
         }
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
