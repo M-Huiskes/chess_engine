@@ -28,6 +28,7 @@ typedef struct
 {
     uint64_t *pos_bb;
     char symbol;
+    char color;
 } Piece;
 
 typedef struct
@@ -135,7 +136,12 @@ int is_bit_set(uint64_t bb, int position)
     return (bb & mask) ? 1 : 0;
 }
 
-uint64_t find_possible_pawn_moves(Piece *piece, Square input_square, int position, uint64_t full_board)
+int is_enemy(Piece *piece, int position, Piece pieces[])
+{
+    Piece *other_piece = find_piece_by_position(pieces, position);
+}
+
+uint64_t find_possible_pawn_moves(Piece pieces[], Piece *piece, Square input_square, int position, uint64_t full_board)
 {
     uint64_t possible_moves = (uint64_t)0;
 
@@ -167,14 +173,65 @@ uint64_t find_possible_pawn_moves(Piece *piece, Square input_square, int positio
             {
                 possible_moves |= ((uint64_t)1 << (position - 16));
             }
-            if (input_square.file < 7 && is_bit_set(full_board, (position - 9)))
-            {
-                possible_moves |= ((uint64_t)1 << (position - 9));
-            }
-            if (input_square.file > 0 && is_bit_set(full_board, (position - 7)))
+            if (input_square.file < 7 && is_bit_set(full_board, (position - 7)))
             {
                 possible_moves |= ((uint64_t)1 << (position - 7));
             }
+            if (input_square.file > 0 && is_bit_set(full_board, (position - 9)))
+            {
+                possible_moves |= ((uint64_t)1 << (position - 9));
+            }
+        }
+    }
+    return possible_moves;
+}
+
+uint64_t find_possible_bishop_moves(Piece pieces[], Piece *piece, Square input_square, int position, uint64_t full_board)
+{
+    uint64_t possible_moves = (uint64_t)0;
+    printf("initial position: %d\n", position);
+    if (!(position % 8 == 0))
+    {
+        int counter = 1;
+        // diagonal in direction a8
+        int temp_position_a = position + 7;
+        while (temp_position_a % 8 != 0 && temp_position_a <= 63)
+        {
+            temp_position_a = position + (7 * counter);
+            counter++;
+            possible_moves |= (uint64_t)1 << temp_position_a;
+        }
+        counter = 1;
+        // diagonal in direction a1
+        temp_position_a = position - 9;
+        while (temp_position_a % 8 != 0 && temp_position_a >= 0)
+        {
+            temp_position_a = position - (9 * counter);
+            counter++;
+            possible_moves |= (uint64_t)1 << temp_position_a;
+        }
+    }
+
+    if (!(position % 7 == 0))
+    {
+        int counter = 1;
+        // diagonal in direction h8
+        int temp_position_h = position + 9;
+        while (temp_position_h % 7 != 0 && temp_position_h <= 63)
+        {
+            temp_position_h = position + (9 * counter);
+            counter++;
+            possible_moves |= (uint64_t)1 << temp_position_h;
+        }
+
+        counter = 1;
+        // diagonal in direction h1
+        temp_position_h = position - 7;
+        while (temp_position_h % 7 != 0 && temp_position_h >= 0)
+        {
+            temp_position_h = position - (7 * counter);
+            counter++;
+            possible_moves |= (uint64_t)1 << temp_position_h;
         }
     }
     return possible_moves;
@@ -184,13 +241,17 @@ uint64_t find_possible_moves(Square input_square, Piece pieces[])
 {
     uint64_t full_board = get_full_board(pieces);
     int position = get_position(input_square);
+    printf("Position of selected piece: %d", position);
     Piece *piece = find_piece_by_position(pieces, position);
 
     switch (piece->symbol)
     {
     case 'P':
     case 'p':
-        return find_possible_pawn_moves(piece, input_square, position, full_board);
+        return find_possible_pawn_moves(pieces, piece, input_square, position, full_board);
+    case 'B':
+    case 'b':
+        return find_possible_bishop_moves(pieces, piece, input_square, position, full_board);
     }
 }
 
@@ -268,18 +329,18 @@ void make_move(Square input_square, Square output_square, Piece pieces[])
 int main()
 {
     Piece pieces[12] = {
-        {&WHITE_PAWNS, 'P'},
-        {&BLACK_PAWNS, 'p'},
-        {&WHITE_ROOKS, 'R'},
-        {&BLACK_ROOKS, 'r'},
-        {&WHITE_KNIGHTS, 'N'},
-        {&BLACK_KNIGHTS, 'n'},
-        {&WHITE_BISHOPS, 'B'},
-        {&BLACK_BISHOPS, 'b'},
-        {&WHITE_QUEEN, 'Q'},
-        {&BLACK_QUEEN, 'q'},
-        {&WHITE_KING, 'K'},
-        {&BLACK_KING, 'k'},
+        {&WHITE_PAWNS, 'P', 'w'},
+        {&BLACK_PAWNS, 'p', 'b'},
+        {&WHITE_ROOKS, 'R', 'w'},
+        {&BLACK_ROOKS, 'r', 'b'},
+        {&WHITE_KNIGHTS, 'N', 'w'},
+        {&BLACK_KNIGHTS, 'n', 'b'},
+        {&WHITE_BISHOPS, 'B', 'w'},
+        {&BLACK_BISHOPS, 'b', 'b'},
+        {&WHITE_QUEEN, 'Q', 'w'},
+        {&BLACK_QUEEN, 'q', 'b'},
+        {&WHITE_KING, 'K', 'w'},
+        {&BLACK_KING, 'k', 'b'},
     };
     Square init_square = {-1, -1};
     print_bitboard(pieces, init_square, (uint64_t)0);
