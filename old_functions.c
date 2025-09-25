@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// test 
-
 const int SQUARE_SIZE = 75;
 const int FILE_OFFSET = 'a';
 const int ROW_OFFSET = '1';
