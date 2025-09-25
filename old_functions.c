@@ -228,18 +228,12 @@ void find_diagonal_moves(int position, uint64_t full_board, uint64_t *possible_m
     int directions[4] = {7, 9, -7, -9};
     for (int i = 0; i < 4; i++)
     {
-        printf("Direction: %d\n", directions[i]);
         int counter = 1;
         int next_pos = position + directions[i];
         int old_pos = position;
-        printf("Check diag move: %d\n", check_diag_move(old_pos, next_pos));
         while (check_diag_move(old_pos, next_pos))
         {
             counter++;
-            printf("Is bit set %d\n", is_bit_set(full_board, next_pos));
-            printf("next pos: %d\n", next_pos);
-            printf("Full bitboard:\n");
-            print_single_bitboard(full_board);
             if (is_bit_set(full_board, next_pos))
             {
                 if (is_enemy(piece, next_pos))
@@ -255,113 +249,96 @@ void find_diagonal_moves(int position, uint64_t full_board, uint64_t *possible_m
     }
 }
 
+int check_vertical_move(int next_pos)
+{
+    return (next_pos < 0 || next_pos > 63) ? 0 : 1;
+}
+
+int check_horizontal_move(int position, int next_pos)
+{
+    if (next_pos < 0 || next_pos > 63)
+    {
+        return 0;
+    }
+    int next_row = next_pos / 8;
+    int old_row = position / 8;
+    int row_diff = next_row - old_row;
+
+    if (row_diff == 0)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+void find_orthogonal_moves(int position, uint64_t full_board, uint64_t *possible_moves, Piece *piece)
+{
+    int hor_dir[2] = {-1, 1};
+    for (int i = 0; i < 2; i++)
+    {
+        int counter = 1;
+        int next_pos = position + hor_dir[i];
+        int old_pos = position;
+        while (check_horizontal_move(old_pos, next_pos))
+        {
+            counter++;
+            if (is_bit_set(full_board, next_pos))
+            {
+                if (is_enemy(piece, next_pos))
+                {
+                    *possible_moves |= (uint64_t)1 << next_pos;
+                }
+                break;
+            }
+            *possible_moves |= (uint64_t)1 << next_pos;
+            old_pos = next_pos;
+            next_pos = old_pos + hor_dir[i];
+        }
+    }
+
+    int ver_dir[2] = {-8, 8};
+    for (int i = 0; i < 2; i++)
+    {
+        int counter = 1;
+        int next_pos = position + ver_dir[i];
+        int old_pos = position;
+        while (check_vertical_move(next_pos))
+        {
+            counter++;
+            if (is_bit_set(full_board, next_pos))
+            {
+                if (is_enemy(piece, next_pos))
+                {
+                    *possible_moves |= (uint64_t)1 << next_pos;
+                }
+                break;
+            }
+            *possible_moves |= (uint64_t)1 << next_pos;
+            old_pos = next_pos;
+            next_pos = old_pos + ver_dir[i];
+        }
+    }
+}
+
 uint64_t find_possible_bishop_moves(Piece *piece, int position, uint64_t full_board)
 {
-    printf("Entering bishop moves\n");
     uint64_t possible_moves = (uint64_t)0;
     find_diagonal_moves(position, full_board, &possible_moves, piece);
-    print_single_bitboard(possible_moves);
     return possible_moves;
 }
 
-uint64_t find_possible_bishop_moves_2(Piece *piece, int position, uint64_t full_board)
+uint64_t find_possible_queen_moves(Piece *piece, int position, uint64_t full_board)
 {
-    printf("Entering bishop moves\n");
     uint64_t possible_moves = (uint64_t)0;
-    if (!(position % 8 == 0))
-    {
-        int counter = 1;
-        // diagonal in direction a8
-        int temp_position_a = position;
-        while (temp_position_a % 8 != 0 && temp_position_a % 7 != 0)
-        {
-            temp_position_a = position + (7 * counter);
-            if (temp_position_a < 0 || temp_position_a > 63)
-            {
-                break;
-            }
-            counter++;
-            printf("Temp position a1 direction: %d\n", temp_position_a);
-            if (is_bit_set(full_board, temp_position_a))
-            {
-                if (is_enemy(piece, temp_position_a))
-                {
-                    possible_moves |= (uint64_t)1 << temp_position_a;
-                }
-                break;
-            }
-            possible_moves |= (uint64_t)1 << temp_position_a;
-        }
-        counter = 1;
-        // diagonal in direction a1
-        temp_position_a = position;
-        while (temp_position_a % 8 != 0 && temp_position_a % 7 != 0)
-        {
-            temp_position_a = position - (9 * counter);
-            if (temp_position_a < 0 || temp_position_a > 63)
-            {
-                break;
-            }
-            printf("Temp position a1 direction: %d\n", temp_position_a);
-            counter++;
-            if (is_bit_set(full_board, temp_position_a))
-            {
-                if (is_enemy(piece, temp_position_a))
-                {
-                    possible_moves |= (uint64_t)1 << temp_position_a;
-                }
-                break;
-            }
-            possible_moves |= (uint64_t)1 << temp_position_a;
-        }
-    }
+    find_diagonal_moves(position, full_board, &possible_moves, piece);
+    find_orthogonal_moves(position, full_board, &possible_moves, piece);
+    return possible_moves;
+}
 
-    if (!(position % 7 == 0))
-    {
-        int counter = 1;
-        // diagonal in direction h8
-        int temp_position_h = position;
-        while (temp_position_h % 7 != 0 && temp_position_h % 8 != 0)
-        {
-            temp_position_h = position + (9 * counter);
-            if (temp_position_h < 0 || temp_position_h > 63)
-            {
-                break;
-            }
-            counter++;
-            if (is_bit_set(full_board, temp_position_h))
-            {
-                if (is_enemy(piece, temp_position_h))
-                {
-                    possible_moves |= (uint64_t)1 << temp_position_h;
-                }
-                break;
-            }
-            possible_moves |= (uint64_t)1 << temp_position_h;
-        }
-
-        counter = 1;
-        // diagonal in direction h1
-        temp_position_h = position;
-        while (temp_position_h % 7 != 0 && temp_position_h % 8 != 0)
-        {
-            temp_position_h = position - (7 * counter);
-            if (temp_position_h < 0 || temp_position_h > 63)
-            {
-                break;
-            }
-            counter++;
-            if (is_bit_set(full_board, temp_position_h))
-            {
-                if (is_enemy(piece, temp_position_h))
-                {
-                    possible_moves |= (uint64_t)1 << temp_position_h;
-                }
-                break;
-            }
-            possible_moves |= (uint64_t)1 << temp_position_h;
-        }
-    }
+uint64_t find_possible_rook_moves(Piece *piece, int position, uint64_t full_board)
+{
+    uint64_t possible_moves = (uint64_t)0;
+    find_orthogonal_moves(position, full_board, &possible_moves, piece);
     return possible_moves;
 }
 
@@ -380,6 +357,12 @@ uint64_t find_possible_moves(Square input_square)
     case 'B':
     case 'b':
         return find_possible_bishop_moves(piece, position, full_board);
+    case 'R':
+    case 'r':
+        return find_possible_rook_moves(piece, position, full_board);
+    case 'Q':
+    case 'q':
+        return find_possible_queen_moves(piece, position, full_board);
     }
 }
 
