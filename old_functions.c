@@ -397,7 +397,6 @@ uint64_t find_possible_moves(Square input_square)
 {
     uint64_t full_board = get_full_board();
     int position = get_position(input_square);
-    printf("Position of selected piece: %d\n", position);
     Piece *piece = find_piece_by_position(position);
 
     switch (piece->symbol)
@@ -432,7 +431,7 @@ void unset_bit(uint64_t *piece_bb, int position)
     *piece_bb &= ~mask;
 }
 
-Square get_input_square(void)
+Square get_input_square(int is_init)
 {
     char input[100];
 
@@ -461,6 +460,17 @@ Square get_input_square(void)
         int row = row_char - ROW_OFFSET;
 
         Square square = {file, row};
+
+        int position = get_position(square);
+        uint64_t full_board = get_full_board();
+
+        Piece *piece = find_piece_by_position(position);
+
+        if (piece == NULL && is_init) {
+            printf("No piece found on square, try again");
+            continue;
+        }
+
         return square;
     }
 }
@@ -495,15 +505,15 @@ int main()
     int loop = 1;
     while (loop)
     {
-        Square input_square = get_input_square();
+        Square input_square = get_input_square(1);
         uint64_t possible_moves = find_possible_moves(input_square);
         print_bitboard(input_square, possible_moves);
 
-        Square output_square = get_input_square();
+        Square output_square = get_input_square(0);
         while (!is_move_possible(output_square, possible_moves))
         {
             printf("move is not possible\n");
-            output_square = get_input_square();
+            output_square = get_input_square(0);
         }
         make_move(input_square, output_square);
         print_bitboard(init_square, (uint64_t)0);
