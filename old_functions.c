@@ -342,6 +342,45 @@ uint64_t find_possible_rook_moves(Piece *piece, int position, uint64_t full_boar
     return possible_moves;
 }
 
+uint64_t find_possible_knight_moves(Piece *piece, int position, uint64_t full_board)
+{
+    uint64_t possible_moves = (uint64_t)0;
+    int ver_dir[2] = {-8, 8};
+    int hor_step[2] = {-1, 1};
+    for (int i = 0; i < 2; i++)
+    {
+        int pos_1 = position + 2 * ver_dir[i];
+        if (check_vertical_move(pos_1))
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                int new_pos = pos_1 + hor_step[j];
+                if (check_horizontal_move(pos_1, new_pos))
+                {
+                    possible_moves |= (uint64_t)1 << new_pos;
+                }
+            }
+        }
+        int pos_2 = position + 2 * hor_step[i];
+        if (check_horizontal_move(position, pos_2))
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                int new_hor = pos_2 + ver_dir[j];
+                if (check_vertical_move(new_hor))
+                {
+                    if (is_bit_set(full_board, position) && !(is_enemy(piece, position)))
+                    {
+                        continue;
+                    }
+                    possible_moves |= (uint64_t)1 << new_hor;
+                }
+            }
+        }
+    }
+    return possible_moves;
+}
+
 uint64_t find_possible_moves(Square input_square)
 {
     uint64_t full_board = get_full_board();
@@ -363,6 +402,9 @@ uint64_t find_possible_moves(Square input_square)
     case 'Q':
     case 'q':
         return find_possible_queen_moves(piece, position, full_board);
+    case 'N':
+    case 'n':
+        return find_possible_knight_moves(piece, position, full_board);
     }
 }
 
