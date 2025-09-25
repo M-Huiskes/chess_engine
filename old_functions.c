@@ -235,7 +235,7 @@ int check_diag_move(int position, int next_pos)
     return 0;
 }
 
-void find_diagonal_moves(int position, uint64_t full_board, uint64_t *possible_moves, Piece *piece)
+void find_diagonal_moves(int position, uint64_t full_board, uint64_t *possible_moves, Piece *piece, int max_counter)
 {
     int directions[4] = {7, 9, -7, -9};
     for (int i = 0; i < 4; i++)
@@ -243,7 +243,7 @@ void find_diagonal_moves(int position, uint64_t full_board, uint64_t *possible_m
         int counter = 1;
         int next_pos = position + directions[i];
         int old_pos = position;
-        while (check_diag_move(old_pos, next_pos))
+        while (check_diag_move(old_pos, next_pos) && counter <= max_counter)
         {
             counter++;
             if (is_bit_set(full_board, next_pos))
@@ -283,7 +283,7 @@ int check_horizontal_move(int position, int next_pos)
     return 0;
 }
 
-void find_orthogonal_moves(int position, uint64_t full_board, uint64_t *possible_moves, Piece *piece)
+void find_orthogonal_moves(int position, uint64_t full_board, uint64_t *possible_moves, Piece *piece, int max_counter)
 {
     int hor_dir[2] = {-1, 1};
     for (int i = 0; i < 2; i++)
@@ -291,7 +291,7 @@ void find_orthogonal_moves(int position, uint64_t full_board, uint64_t *possible
         int counter = 1;
         int next_pos = position + hor_dir[i];
         int old_pos = position;
-        while (check_horizontal_move(old_pos, next_pos))
+        while (check_horizontal_move(old_pos, next_pos) && counter <= max_counter)
         {
             counter++;
             if (is_bit_set(full_board, next_pos))
@@ -334,23 +334,35 @@ void find_orthogonal_moves(int position, uint64_t full_board, uint64_t *possible
 
 uint64_t find_possible_bishop_moves(Piece *piece, int position, uint64_t full_board)
 {
+    int max_counter = 8;
     uint64_t possible_moves = (uint64_t)0;
-    find_diagonal_moves(position, full_board, &possible_moves, piece);
+    find_diagonal_moves(position, full_board, &possible_moves, piece, max_counter);
     return possible_moves;
 }
 
 uint64_t find_possible_queen_moves(Piece *piece, int position, uint64_t full_board)
 {
+    int max_counter = 8;
     uint64_t possible_moves = (uint64_t)0;
-    find_diagonal_moves(position, full_board, &possible_moves, piece);
-    find_orthogonal_moves(position, full_board, &possible_moves, piece);
+    find_diagonal_moves(position, full_board, &possible_moves, piece, max_counter);
+    find_orthogonal_moves(position, full_board, &possible_moves, piece, max_counter);
     return possible_moves;
 }
 
 uint64_t find_possible_rook_moves(Piece *piece, int position, uint64_t full_board)
 {
+    int max_counter = 8;
     uint64_t possible_moves = (uint64_t)0;
-    find_orthogonal_moves(position, full_board, &possible_moves, piece);
+    find_orthogonal_moves(position, full_board, &possible_moves, piece, max_counter);
+    return possible_moves;
+}
+
+uint64_t find_possible_king_moves(Piece *piece, int position, uint64_t full_board)
+{
+    int max_counter = 1;
+    uint64_t possible_moves = (uint64_t)0;
+    find_diagonal_moves(position, full_board, &possible_moves, piece, max_counter);
+    find_orthogonal_moves(position, full_board, &possible_moves, piece, max_counter);
     return possible_moves;
 }
 
@@ -416,6 +428,11 @@ uint64_t find_possible_moves(Square input_square)
     case 'N':
     case 'n':
         return find_possible_knight_moves(piece, position, full_board);
+    case 'K':
+    case 'k':
+        return find_possible_king_moves(piece, position, full_board);
+    default:
+        return (uint64_t)0;
     }
 }
 
@@ -466,7 +483,8 @@ Square get_input_square(int is_init)
 
         Piece *piece = find_piece_by_position(position);
 
-        if (piece == NULL && is_init) {
+        if (piece == NULL && is_init)
+        {
             printf("No piece found on square, try again");
             continue;
         }
