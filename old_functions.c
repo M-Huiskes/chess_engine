@@ -169,10 +169,16 @@ uint64_t find_possible_pawn_moves(Piece *piece, Square input_square, int positio
     {
         if (input_square.row < 8)
         {
-            possible_moves |= ((uint64_t)1 << (position + 8));
+            if (!(is_bit_set(full_board, (position + 8))))
+            {
+                possible_moves |= ((uint64_t)1 << (position + 8));
+            }
             if (input_square.row == 1)
             {
-                possible_moves |= ((uint64_t)1 << (position + 16));
+                if (!(is_bit_set(full_board, (position + 16))))
+                {
+                    possible_moves |= ((uint64_t)1 << (position + 16));
+                }
             }
             if (input_square.file < 7 && is_bit_set(full_board, (position + 9)) && is_enemy(piece, (position + 9)))
             {
@@ -188,10 +194,16 @@ uint64_t find_possible_pawn_moves(Piece *piece, Square input_square, int positio
     {
         if (input_square.row > 0)
         {
-            possible_moves |= ((uint64_t)1 << (position - 8));
+            if (!(is_bit_set(full_board, (position - 8))))
+            {
+                possible_moves |= ((uint64_t)1 << (position - 8));
+            }
             if (input_square.row == 6)
             {
-                possible_moves |= ((uint64_t)1 << (position - 16));
+                if (!(is_bit_set(full_board, (position - 16))))
+                {
+                    possible_moves |= ((uint64_t)1 << (position - 16));
+                }
             }
             if (input_square.file < 7 && is_bit_set(full_board, (position - 7)) && is_enemy(piece, (position - 7)))
             {
