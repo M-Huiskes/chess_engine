@@ -37,6 +37,8 @@ typedef struct
     int row;
 } Square;
 
+int TOTAL_MOVES = 0;
+
 Piece PIECES[12] = {
     {&WHITE_PAWNS, 'P', 'w'},
     {&BLACK_PAWNS, 'p', 'b'},
@@ -359,6 +361,7 @@ uint64_t find_possible_rook_moves(Piece *piece, int position, uint64_t full_boar
 
 uint64_t find_possible_king_moves(Piece *piece, int position, uint64_t full_board)
 {
+    // Implement castling
     int max_counter = 1;
     uint64_t possible_moves = (uint64_t)0;
     find_diagonal_moves(position, full_board, &possible_moves, piece, max_counter);
@@ -405,11 +408,20 @@ uint64_t find_possible_knight_moves(Piece *piece, int position, uint64_t full_bo
     return possible_moves;
 }
 
-uint64_t find_possible_moves(Square input_square)
+int get_lowest_bit_position(uint64_t bb)
+{
+    int index = 0;
+    while ((bb & 1ULL) == 0)
+    {
+        bb >>= 1;
+        index++;
+    }
+    return index;
+}
+
+uint64_t find_possible_moves(Square input_square, int position, Piece *piece)
 {
     uint64_t full_board = get_full_board();
-    int position = get_position(input_square);
-    Piece *piece = find_piece_by_position(position);
 
     switch (piece->symbol)
     {
@@ -434,6 +446,45 @@ uint64_t find_possible_moves(Square input_square)
     default:
         return (uint64_t)0;
     }
+}
+
+int is_check(char color_moving)
+{
+    char other_color;
+    int king_index;
+    if (color_moving == 'w')
+    {
+        other_color = 'b';
+        king_index = 11;
+    }
+    else
+    {
+        other_color = 'w';
+        king_index = 10;
+    }
+
+    int king_position = get_lowest_bit_position(*(PIECES[king_index].pos_bb));
+
+    for (int i = 0; i < 12; i++)
+    {
+        if (PIECES[i].color == color_moving)
+        {
+            uint64_t piece_bb = *(PIECES[i].pos_bb);
+            while (piece_bb)
+            {
+                int piece_position = get_lowest_bit_position(piece_bb);
+                Square input_square = square_from_position(piece_position);
+                Piece *piece = find_piece_by_position(piece_position);
+                uint64_t possible_moves = find_possible_moves(input_square, piece_position, piece);
+                if (is_bit_set(possible_moves, king_position))
+                {
+                    return 1;
+                }
+                piece_bb &= piece_bb - 1;
+            }
+        }
+    }
+    return 0;
 }
 
 void set_bit(uint64_t *piece_bb, int position)
@@ -516,6 +567,19 @@ void make_move(Square input_square, Square output_square)
     set_bit(piece->pos_bb, new_pos);
 }
 
+int is_move_of_color(char color)
+{
+    if (color == 'w' && TOTAL_MOVES % 2 != 0)
+    {
+        return 0;
+    }
+    if (color == 'b' && TOTAL_MOVES % 2 == 0)
+    {
+        return 0;
+    }
+    return 1;
+}
+
 int main()
 {
     Square init_square = {-1, -1};
@@ -524,7 +588,26 @@ int main()
     while (loop)
     {
         Square input_square = get_input_square(1);
-        uint64_t possible_moves = find_possible_moves(input_square);
+        int position = get_position(input_square);
+        Piece *piece = find_piece_by_position(position);
+        while (!is_move_of_color(piece->color))
+        {
+            char *color;
+            if (piece->color == 'w')
+            {
+                color = "white";
+            }
+            else
+            {
+                color = "black";
+            }
+            printf("It is not the turn of %s\n", color);
+            input_square = get_input_square(1);
+            position = get_position(input_square);
+            piece = find_piece_by_position(position);
+            printf("Position: %d, Symbol of piece: %c\n", position, piece->symbol);
+        }
+        uint64_t possible_moves = find_possible_moves(input_square, position, piece);
         print_bitboard(input_square, possible_moves);
 
         Square output_square = get_input_square(0);
@@ -533,7 +616,12 @@ int main()
             printf("move is not possible\n");
             output_square = get_input_square(0);
         }
+        if (is_check(piece->color))
+        {
+            printf("You are in check!!!!!!!!!!!!!");
+        }
         make_move(input_square, output_square);
+        TOTAL_MOVES++;
         print_bitboard(init_square, (uint64_t)0);
     }
     return 0;
